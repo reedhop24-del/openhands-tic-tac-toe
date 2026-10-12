@@ -8,6 +8,7 @@ const POLL_MS = 2000;
 export default function useMatchedGame() {
   const [token, setToken] = useState(null);
   const [game, setGame] = useState(null);
+  const [player, setPlayer] = useState(null);
   const [error, setError] = useState(null);
   const [attempt, setAttempt] = useState(0);
   // Kept across StrictMode's dev-only effect re-run so one visit requests one token.
@@ -30,6 +31,7 @@ export default function useMatchedGame() {
         const found = gameId ? await getGame(gameId) : await getGameByToken(sessionToken);
         if (cancelled) return;
         if (found) {
+          if (!gameId) setPlayer(found.player);
           gameId = found.id;
           updateGame(found);
         }
@@ -62,9 +64,10 @@ export default function useMatchedGame() {
     tokenRequest.current = null;
     setToken(null);
     setGame(null);
+    setPlayer(null);
     setError(null);
     setAttempt((n) => n + 1);
   }, []);
 
-  return { token, game, updateGame, error, restart };
+  return { token, game, player, updateGame, error, restart };
 }

@@ -112,8 +112,29 @@ test('findGameForSession returns the matched game for both players', async () =>
   const [x, o] = [randomUUID(), randomUUID()];
   await pushRaw(x, o);
   const game = await matchPlayers();
-  assert.deepEqual(await findGameForSession(x), game);
-  assert.deepEqual(await findGameForSession(o), game);
+  assert.deepEqual(await findGameForSession(x), { ...game, player: 'X' });
+  assert.deepEqual(await findGameForSession(o), { ...game, player: 'O' });
+});
+
+test('findGameForSession reports the mark each session plays', async () => {
+  const [first, second, third, fourth] = [randomUUID(), randomUUID(), randomUUID(), randomUUID()];
+  await pushRaw(first, second, third, fourth);
+  await matchPlayers();
+  await matchPlayers();
+  assert.equal((await findGameForSession(first)).player, 'X');
+  assert.equal((await findGameForSession(second)).player, 'O');
+  assert.equal((await findGameForSession(third)).player, 'X');
+  assert.equal((await findGameForSession(fourth)).player, 'O');
+});
+
+test('a session keeps the same mark across repeated lookups', async () => {
+  const [x, o] = [randomUUID(), randomUUID()];
+  await pushRaw(x, o);
+  await matchPlayers();
+  for (let i = 0; i < 3; i += 1) {
+    assert.equal((await findGameForSession(x)).player, 'X');
+    assert.equal((await findGameForSession(o)).player, 'O');
+  }
 });
 
 test('findGameForSession returns null for an unknown session', async () => {
