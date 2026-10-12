@@ -5,11 +5,16 @@ const cellStyle = {
   cursor: 'pointer',
 };
 
-export default function Board({ board, onSquareClick }) {
+export default function Board({ board, onSquareClick, disabled = false }) {
   return (
     <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 80px)', gap: 4 }}>
       {board.map((value, index) => (
-        <button key={index} style={cellStyle} onClick={() => onSquareClick(index)}>
+        <button
+          key={index}
+          style={cellStyle}
+          disabled={disabled}
+          onClick={() => onSquareClick(index)}
+        >
           {value}
         </button>
       ))}

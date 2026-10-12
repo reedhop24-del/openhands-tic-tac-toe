@@ -40,23 +40,35 @@ test('GET /games?token returns 200 and the matched game for the X session', asyn
   const { x, game } = await matchPair();
   const { status, body } = await getJson(`/games?token=${x}`);
   assert.equal(status, 200);
-  assert.deepEqual(body, game);
+  assert.deepEqual(body, { ...game, player: 'X' });
 });
 
-test('GET /games?token returns the same game for the O session', async () => {
+test('GET /games?token returns the same game, with its own mark, for the O session', async () => {
   const { x, o, game } = await matchPair();
   const forX = await getJson(`/games?token=${x}`);
   const forO = await getJson(`/games?token=${o}`);
   assert.equal(forO.status, 200);
   assert.equal(forO.body.id, game.id);
-  assert.deepEqual(forO.body, forX.body);
+  assert.equal(forX.body.player, 'X');
+  assert.equal(forO.body.player, 'O');
+  const { player: _x, ...xGame } = forX.body;
+  const { player: _o, ...oGame } = forO.body;
+  assert.deepEqual(oGame, xGame);
 });
 
-test('GET /games?token matches GET /games/:id for the same game', async () => {
+test('GET /games?token matches GET /games/:id apart from the session mark', async () => {
   const { x, game } = await matchPair();
   const byToken = await getJson(`/games?token=${x}`);
   const byId = await getJson(`/games/${game.id}`);
-  assert.deepEqual(byToken.body, byId.body);
+  const { player, ...rest } = byToken.body;
+  assert.equal(player, 'X');
+  assert.deepEqual(rest, byId.body);
+});
+
+test('GET /games/:id does not include a session mark', async () => {
+  const { game } = await matchPair();
+  const { body } = await getJson(`/games/${game.id}`);
+  assert.equal('player' in body, false);
 });
 
 test('GET /games?token returns 404 for an unknown token', async () => {

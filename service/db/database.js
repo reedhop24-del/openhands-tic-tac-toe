@@ -98,4 +98,6 @@ export const matchFromQueue = async (build) => {
 
 export const findGameIdBySession = (token) => redis.get(sessionKey(token));
 
+export const findPlayers = (gameId) => redis.hgetall(playersKey(gameId));
+
 export const disconnect = () => redis.quit();

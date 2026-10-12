@@ -4,14 +4,14 @@ import useMatchedGame from './hooks/useMatchedGame.js';
 import { makeMove } from './api/gameApi.js';
 
 export default function App() {
-  const { token, game, updateGame, error, restart } = useMatchedGame();
+  const { token, game, player, updateGame, error, restart } = useMatchedGame();
   const [moveError, setMoveError] = useState(null);
 
-  // No client-side validation: the service decides if a move is legal.
-  // The UI plays as whoever the server says is up next.
+  // Each session plays one fixed mark; the board is locked unless it is our turn.
+  // Beyond that the service decides if a move is legal.
   const handleSquareClick = async (index) => {
     try {
-      updateGame(await makeMove(game.id, game.currentPlayer, index));
+      updateGame(await makeMove(game.id, player, index));
       setMoveError(null);
     } catch (err) {
       setMoveError(err.message);
@@ -31,8 +31,14 @@ export default function App() {
       {token && <p style={{ fontSize: 12, color: '#666' }}>Session: {token}</p>}
       {game && (
         <>
-          <p>Next to play: {game.currentPlayer}</p>
-          <Board board={game.board} onSquareClick={handleSquareClick} />
+          <p>
+            You are: {player} | Next to play: {game.currentPlayer}
+          </p>
+          <Board
+            board={game.board}
+            onSquareClick={handleSquareClick}
+            disabled={game.currentPlayer !== player}
+          />
           <p>
             Status: {game.status} | Winner: {game.winner ?? 'none'} | Version: {game.version}
           </p>
