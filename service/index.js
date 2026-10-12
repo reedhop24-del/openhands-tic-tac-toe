@@ -1,15 +1,19 @@
-import express from 'express';
-import * as gameController from './controllers/gameController.js';
+import app from './app.js';
+import { startMatchmaker } from './worker/spawnMatchmaker.js';
 
-const app = express();
 const PORT = 3000;
 
-app.use(express.json());
-
-app.post('/games', gameController.create);
-app.get('/games/:id', gameController.get);
-app.post('/games/:gameId/moves', gameController.move);
-
-app.listen(PORT, () => {
+const server = app.listen(PORT, () => {
   console.log(`Server listening on port ${PORT}`);
 });
+
+const matchmaker = startMatchmaker();
+
+const shutdown = async () => {
+  server.close();
+  await matchmaker.stop();
+  process.exit(0);
+};
+
+process.on('SIGINT', shutdown);
+process.on('SIGTERM', shutdown);
