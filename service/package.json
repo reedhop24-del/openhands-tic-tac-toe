@@ -8,6 +8,7 @@
     "test": "node --test"
   },
   "dependencies": {
-    "express": "^5.1.0"
+    "express": "^5.1.0",
+    "ioredis": "^5.4.1"
   }
 }
