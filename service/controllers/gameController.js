@@ -11,3 +11,13 @@ export const get = async (req, res) => {
   if (!game) return res.status(404).json({ error: 'Game not found' });
   res.json(game);
 };
+
+export const move = async (req, res) => {
+  try {
+    const game = await gameService.makeMove(req.params.gameId, req.body ?? {});
+    res.status(201).json(game);
+  } catch (err) {
+    if (!err.status) throw err;
+    res.status(err.status).json({ error: err.message });
+  }
+};
