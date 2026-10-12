@@ -16,7 +16,7 @@ const snapshot = (game, player, move) => ({
 const nextPlayer = (lastVersion) =>
   lastVersion?.player ? PLAYERS.find((p) => p !== lastVersion.player) : PLAYERS[0];
 
-export const createGame = async () => {
+export const buildNewGame = () => {
   const game = {
     id: randomUUID(),
     board: Array(9).fill(null),
@@ -25,7 +25,12 @@ export const createGame = async () => {
     winner: null,
     version: 1,
   };
-  return insertGame(game, snapshot(game, null, null));
+  return { game, version: snapshot(game, null, null) };
+};
+
+export const createGame = async () => {
+  const { game, version } = buildNewGame();
+  return insertGame(game, version);
 };
 
 export const getGame = async (id) => find(id);

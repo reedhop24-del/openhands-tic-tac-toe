@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "start": "node index.js",
-    "test": "node --test"
+    "worker": "node worker/matchmaker.js",
+    "test": "TOKEN_QUEUE_KEY=tokens:queue:test node --test --test-concurrency=1"
   },
   "dependencies": {
     "express": "^5.1.0",

@@ -7,6 +7,7 @@ export default defineConfig({
     port: 5173,
     proxy: {
       '/games': 'http://localhost:3000',
+      '/token': 'http://localhost:3000',
     },
   },
 });
