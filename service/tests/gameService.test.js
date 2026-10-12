@@ -1,7 +1,9 @@
-import { test } from 'node:test';
+import { test, after } from 'node:test';
 import assert from 'node:assert/strict';
 import { createGame, getGame, makeMove } from '../services/gameService.js';
-import { findVersions } from '../db/database.js';
+import { findVersions, disconnect } from '../db/database.js';
+
+after(disconnect);
 
 test('makeMove places the player mark on the board', async () => {
   const { id } = await createGame();
@@ -258,6 +260,70 @@ test('game-over check applies per game', async () => {
   await play(done.id, [['X', 0], ['O', 3], ['X', 1], ['O', 4], ['X', 2]]);
   const game = await makeMove(live.id, { player: 'X', move: 0 });
   assert.equal(game.status, 'in_progress');
+});
+
+test('two simultaneous moves by the same player: exactly one is applied', async () => {
+  const { id } = await createGame();
+  const results = await Promise.allSettled([
+    makeMove(id, { player: 'X', move: 0 }),
+    makeMove(id, { player: 'X', move: 1 }),
+  ]);
+  const fulfilled = results.filter((r) => r.status === 'fulfilled');
+  const rejected = results.filter((r) => r.status === 'rejected');
+  assert.equal(fulfilled.length, 1);
+  assert.equal(rejected.length, 1);
+  assert.equal(rejected[0].reason.status, 409);
+  assert.match(rejected[0].reason.message, /Not your turn/);
+
+  const stored = await getGame(id);
+  assert.equal(stored.version, 2);
+  assert.equal(stored.board.filter(Boolean).length, 1);
+  assert.equal((await findVersions(id)).length, 2);
+});
+
+test('two simultaneous moves on the same space: exactly one is applied', async () => {
+  const { id } = await createGame();
+  await makeMove(id, { player: 'X', move: 0 });
+  const results = await Promise.allSettled([
+    makeMove(id, { player: 'O', move: 4 }),
+    makeMove(id, { player: 'O', move: 4 }),
+  ]);
+  assert.equal(results.filter((r) => r.status === 'fulfilled').length, 1);
+  assert.equal(results.filter((r) => r.status === 'rejected').length, 1);
+  assert.equal((await getGame(id)).version, 3);
+  assert.equal((await findVersions(id)).length, 3);
+});
+
+test('many concurrent moves keep game and versions consistent', async () => {
+  const { id } = await createGame();
+  const attempts = [0, 1, 2, 3, 4, 5].flatMap((cell) => [
+    makeMove(id, { player: 'X', move: cell }),
+    makeMove(id, { player: 'O', move: cell }),
+  ]);
+  const results = await Promise.allSettled(attempts);
+  assert.ok(results.some((r) => r.status === 'fulfilled'));
+
+  const stored = await getGame(id);
+  const versions = await findVersions(id);
+  assert.equal(versions.length, stored.version);
+  assert.deepEqual(
+    versions.map((v) => v.version),
+    versions.map((_, i) => i + 1),
+  );
+  assert.equal(stored.board.filter(Boolean).length, stored.version - 1);
+  versions.slice(1).forEach((v, i) => {
+    assert.equal(v.player, i % 2 === 0 ? 'X' : 'O');
+  });
+});
+
+test('a failed concurrent move does not write a version', async () => {
+  const { id } = await createGame();
+  await Promise.allSettled([
+    makeMove(id, { player: 'X', move: 0 }),
+    makeMove(id, { player: 'O', move: 0 }),
+  ]);
+  const stored = await getGame(id);
+  assert.equal((await findVersions(id)).length, stored.version);
 });
 
 test('turn order is tracked per game', async () => {
