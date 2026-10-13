@@ -1,5 +1,5 @@
 ### Repo Location: https://github.com/reedhop24-del/openhands-tic-tac-toe
-### Screen recording: https://www.youtube.com/watch?v=f4aVNm2p6-Q
+### Screen recording: https://www.dropbox.com/scl/fi/y30uehl2gv2a919ems4yx/Open-Hands-Assessment.mp4?rlkey=3jwzjc3e83cg7f3ywtpyfb6bm&st=sax3a2zo&dl=0
 
 ## How to run the app and manual test
 
