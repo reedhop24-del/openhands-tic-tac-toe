@@ -16,10 +16,13 @@
 
 #### Run the App:
 - `cd service`
+- `npm install`
 - `npm run start`
 
 #### Run the UI:
+- Open up new terminal
 - `cd ui`
+- `npm install`
 - `npm run dev`
 
 #### Steps to test
