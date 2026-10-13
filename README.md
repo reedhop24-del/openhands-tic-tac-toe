@@ -1,7 +1,7 @@
 ### Repo Location: https://github.com/reedhop24-del/openhands-tic-tac-toe
 ### Screen recording: https://www.youtube.com/watch?v=f4aVNm2p6-Q
 
-## How to run the app and the tests
+## How to run the app and manual test
 
 ### Prereqs:
 - node v20.20.2
@@ -31,6 +31,11 @@
 - After no more than 5 seconds each client will join the same game
 - Play a round of tic tac toe between the clients
 - Verify the correct client is displayed as the winner and that the game is over
+
+### Automated Tests
+- `cd service`
+- `npm install` (if haven't already)
+- `npm run test`
 
 ## Your design: how the backend models the game, and why
 If you think about a physical tic tac toe game, there are two different things you draw on the paper: a board and moves on the board. Therefore the 
