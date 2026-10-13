@@ -1,7 +1,7 @@
 ### Repo Location: https://github.com/reedhop24-del/openhands-tic-tac-toe
 ### Screen recording: https://www.youtube.com/watch?v=f4aVNm2p6-Q
 
-## How to run the app and the tests
+## How to run the app and manual test
 
 ### Prereqs:
 - node v20.20.2
@@ -32,7 +32,13 @@
 - Play a round of tic tac toe between the clients
 - Verify the correct client is displayed as the winner and that the game is over
 
+### Automated Tests
+- `cd service`
+- `npm install` (if haven't already)
+- `npm run test`
+
 ## Your design: how the backend models the game, and why
+
 If you think about a physical tic tac toe game, there are two different things you draw on the paper: a board and moves on the board. Therefore the 
 base of the API is just this. So in the first phase while building the base requirements: a POST /games creates a game then moves are done on POST /games/{gameId}/moves. The move API will return a game result as soon as the board reflects a win or draw, this is also how game play works in the real world. I wanted to follow good REST convention while also modeling real world play. 
 
@@ -42,9 +48,11 @@ a length 9 array ie: ["X",null,"X","O","X","O","O",null,null]. Moves are stored 
 2. Is this spot on the board currently taken? 
 3. Is the game still in progress? 
 4. Is the space the user is trying to move valid within the 0-8 idx of the board?
+
 The result of the game is also determined server side so the client does not have to do any translation from the board state to result. 
 
 ## What you chose to build beyond the requirements, and why
+
 ### Redis
 Within the base requirements I was just storing the tic tac toe data in memory. The logical next step was to store this data somewhere outside of Node so a server restart would persist the data. Redis was a good fit for a couple of reasons:
 1. Flexibility, I could use whichever type fit each need without defining a schema: list for the FIFO session queue, JSON strings for games and versions, and a simple key value pair for session to game lookup.
@@ -53,6 +61,7 @@ Within the base requirements I was just storing the tic tac toe data in memory. 
 4. Redis also provides optimistic locks through `WATCH`, `MULTI`, and `EXEC`. Since write contention is rare, I wanted optimistic locks rather than having to use a pessimistic lock. 
 
 ### Matchmaking queue and worker
+
 The second thing I chose to build was making this all multi client. In the initial requirements users would take turns between X and O from the same client. I thought the best way to make this multiplayer would be through a matchmaking process and a waiting room. The client fetches a session token, their session token is then put on a FIFO queue. The main NodeJs app spins up a child process which grabs the oldest 2 tokens in the queue and creates a game with them. The client then is polling for their session token until a game is available. Since the game now has moves coming from 2 different clients, each client is polling the GET games endpoint to see moves the other player has made. 
 
 This async worker + queue worked well with the APIs I had built in previous steps. It seemed like an extension on the work up until this point rather than a rewrite. I chose this as I thought it would highlight a lof of the real world engineering I have done. Things are often asynchronous so how we handle those async processes while taking into account UX is something I enjoy. It also was a great opportunity to highlight the native FIFO queue that is afforded with redis.  
@@ -71,8 +80,9 @@ I deviated from my goals in a couple of different ways:
 - Just used node's test runner rather than vitest, since the testing was simple enough I didn’t push back on Claudes decision there. 
 - The child matchmaking worker does not work how I intended, the worker currenly spins up every 5 seconds and creates only 1 game. If this were going to be released to production with many different clients, this would break. Users would be sitting in the queue for way too long. I just failed to prompt Claude to clear the queue on every run of the child process. It should run the same logic of grabbing the front of the queue but do it in a loop so the queue gets emptied. This would be a pretty simple fix. 
 
-#### Improve with more time
+### Improve with more time
 - One of the stated goals was a docker compose, I think since redis is running as a separate container this would be pretty necessary for spinning up the entire app more easily
 - Currently we are polling in a couple of different places. It would be nice to instead make use of Websockets. Instead of continually asking the server if a new game exists for the session, a WS server could push messages down. Same thing with the poll for the board, a WS server could send the new board down to the client and let them know it is their turn.
-- The worker also could be a long lived worker instead of spinning up every 5 seconds and going back down. I wanted to do a timed child process because I wanted some delay to mimic how a waiting room usually works for most games. If this were a production system, a dedicated and long lived worker would be implemented. 
+- The worker also could be a long lived worker instead of spinning up every 5 seconds and going back down. I wanted to do a timed child process because I wanted some delay to mimic how a waiting room usually works for most games. If this were a production system, a dedicated and long lived worker would be implemented.
+- The UI could use a lot of work with the new session concept. It should block all play as soon as a game is won. It should also display the winner of the game from the polled GET game API. 
 
