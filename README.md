@@ -74,5 +74,6 @@ I deviated from my goals in a couple of different ways:
 #### Improve with more time
 - One of the stated goals was a docker compose, I think since redis is running as a separate container this would be pretty necessary for spinning up the entire app more easily
 - Currently we are polling in a couple of different places. It would be nice to instead make use of Websockets. Instead of continually asking the server if a new game exists for the session, a WS server could push messages down. Same thing with the poll for the board, a WS server could send the new board down to the client and let them know it is their turn.
-- The worker also could be a long lived worker instead of spinning up every 5 seconds and going back down. I wanted to do a timed child process because I wanted some delay to mimic how a waiting room usually works for most games. If this were a production system, a dedicated and long lived worker would be implemented. 
+- The worker also could be a long lived worker instead of spinning up every 5 seconds and going back down. I wanted to do a timed child process because I wanted some delay to mimic how a waiting room usually works for most games. If this were a production system, a dedicated and long lived worker would be implemented.
+- The UI could use a lot of work with the new session concept. It should block all play as soon as a game is won. It should also display the winner of the game from the polled GET game API. 
 
